@@ -41,9 +41,12 @@ CWD=$(python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('cwd','')
 # タイムスタンプ
 TIME=$(date '+%H:%M:%S')
 
+# フォルダ名のみ抽出（プッシュ通知に収まるよう短縮）
+DIR_NAME=$(basename "$CWD" 2>/dev/null)
+
 # メッセージ組み立て
-if [ -n "$CWD" ]; then
-  MSG="✅ Claude Code 完了\n📂 ${CWD}\n⏰ ${TIME}"
+if [ -n "$DIR_NAME" ]; then
+  MSG="✅ Claude Code 完了\n📂 ${DIR_NAME}\n⏰ ${TIME}"
 else
   MSG="✅ Claude Code 完了\n⏰ ${TIME}"
 fi
