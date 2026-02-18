@@ -1,19 +1,28 @@
 # LINE 通知スキル for Claude Code
 
-Claude Code のタスク完了時に LINE へプッシュ通知を送信するフックスキルです。長時間タスクの完了を手元のスマートフォンで即座に確認できます。
+Claude Code のタスク完了時・承認待ち時に LINE へプッシュ通知を送信するフックスキルです。長時間タスクの完了や、途中の承認待ちを手元のスマートフォンで即座に確認できます。
 
 ## 機能
 
-- Claude Code の **Stop フック** でタスク完了を検知し、LINE に通知
-- 作業ディレクトリとタイムスタンプを通知メッセージに含む
+- **タスク完了通知**: Stop フックでタスク完了を検知し LINE に通知
+- **入力待ち通知**: Notification フックで承認待ち（yes/no）を検知し LINE に通知
+- 作業フォルダ名とタイムスタンプを通知メッセージに含む
 - **ワンコマンドで ON/OFF 切替**が可能
 - バックグラウンド送信のため Claude Code の動作をブロックしない
 
 ## 通知イメージ
 
+**タスク完了時:**
 ```
 ✅ Claude Code 完了
-📂 /Users/you/project
+📂 my-project
+⏰ 14:32:05
+```
+
+**承認待ち時:**
+```
+⏸️ 入力待ち: my-project
+💬 Bash を実行してよいですか？
 ⏰ 14:32:05
 ```
 
@@ -31,8 +40,10 @@ Claude Code のタスク完了時に LINE へプッシュ通知を送信する�
 ```bash
 # フックディレクトリにコピー
 cp line-notify.sh ~/.claude/hooks/
+cp line-notify-waiting.sh ~/.claude/hooks/
 cp line-notify-toggle.sh ~/.claude/hooks/
 chmod +x ~/.claude/hooks/line-notify.sh
+chmod +x ~/.claude/hooks/line-notify-waiting.sh
 chmod +x ~/.claude/hooks/line-notify-toggle.sh
 ```
 
@@ -61,6 +72,17 @@ EOF
       {
         "type": "command",
         "command": "$HOME/.claude/hooks/line-notify.sh"
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/line-notify-waiting.sh"
+          }
+        ]
       }
     ]
   }
@@ -103,7 +125,8 @@ LINE Developers コンソール → チャネル → 「あなたのユーザー
 
 | ファイル | 説明 |
 |---|---|
-| `line-notify.sh` | メイン通知スクリプト（Stop フックから実行） |
+| `line-notify.sh` | タスク完了通知スクリプト（Stop フックから実行） |
+| `line-notify-waiting.sh` | 入力待ち通知スクリプト（Notification フックから実行） |
 | `line-notify-toggle.sh` | 通知の ON/OFF 切替スクリプト |
 
 ## 技術スタック
@@ -115,8 +138,17 @@ LINE Developers コンソール → チャネル → 「あなたのユーザー
 
 ## 仕組み
 
+### タスク完了通知 (`line-notify.sh`)
+
 1. Claude Code がタスクを完了すると Stop フックが発火
-2. `line-notify.sh` が stdin から JSON（`session_id`, `cwd` 等）を受け取る
+2. stdin から JSON（`session_id`, `cwd` 等）を受け取る
 3. 環境変数ファイルから認証情報と有効フラグを読み込み
 4. LINE Messaging API の Push Message エンドポイントへ通知を送信
 5. 送信はバックグラウンドで行われ、Claude Code の次のタスクをブロックしない
+
+### 入力待ち通知 (`line-notify-waiting.sh`)
+
+1. Claude Code がツール実行の承認を求めると Notification フック（`permission_prompt`）が発火
+2. stdin から JSON（`cwd`, `notification_type`, `message` 等）を受け取る
+3. 承認待ちの内容とフォルダ名を LINE に通知
+4. 同じ認証情報・有効フラグを共有するため追加設定不要
