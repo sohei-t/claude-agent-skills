@@ -7,7 +7,8 @@ Claude Code を拡張するカスタムスキル（フック・ツール）の�
 
 | スキル | 説明 | 技術 |
 |---|---|---|
-| [line-notify](./line-notify/) | タスク完了時に LINE プッシュ通知を送信 | Bash, curl, LINE Messaging API |
+| [slack-notify](./slack-notify/) | タスク完了・承認待ち時に Slack 通知を送信 | Bash, curl, Slack Incoming Webhooks |
+| [line-notify](./line-notify/) | タスク完了・承認待ち時に LINE プッシュ通知を送信 | Bash, curl, LINE Messaging API |
 
 ## クイックスタート
 
@@ -34,10 +35,16 @@ cd line-notify
 claude-agent-skills/
 ├── README.md           # このファイル
 ├── LICENSE             # MIT License
+├── slack-notify/       # Slack通知スキル（推奨）
+│   ├── README.md
+│   ├── slack-notify.sh
+│   ├── slack-notify-waiting.sh
+│   └── slack-notify-toggle.sh
 ├── line-notify/        # LINE通知スキル
-│   ├── README.md       # 詳細ドキュメント
-│   ├── line-notify.sh  # メイン通知スクリプト
-│   └── line-notify-toggle.sh  # ON/OFF切替
+│   ├── README.md
+│   ├── line-notify.sh
+│   ├── line-notify-waiting.sh
+│   └── line-notify-toggle.sh
 └── (今後追加予定)
 ```
 
